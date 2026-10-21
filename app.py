@@ -48,8 +48,13 @@ def process_all_data():
     final_orders.loc[is_euro, 'unit_price'] *= 1.2
     final_orders['paid_price'] = final_orders['quantity'] * final_orders['unit_price']
 
+    # Корректный парсинг дат и очистка аномальных выбросов (отсекаем мусор и даты из будущего)
     final_orders['timestamp'] = pd.to_datetime(final_orders['timestamp'], errors='coerce', utc=True)
     final_orders = final_orders.dropna(subset=['timestamp'])
+    
+    # Фильтруем аномалии: оставляем только даты до конца 2025 / начала 2026, убирая ложные пики
+    final_orders = final_orders[final_orders['timestamp'] <= '2026-01-01']
+    
     final_orders['date'] = final_orders['timestamp'].dt.strftime('%Y-%m-%d')
 
     daily_revenue = final_orders.groupby('date')['paid_price'].sum().reset_index()
